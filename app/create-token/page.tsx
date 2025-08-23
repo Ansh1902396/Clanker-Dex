@@ -105,31 +105,58 @@ export default function CreateTokenPage() {
         )}
 
         {deploymentResult && (
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader>
-              <CardTitle className="text-green-800">🎉 Token Deployed Successfully!</CardTitle>
+          <Card className="border-success/20 bg-gradient-to-br from-success/5 to-success/10">
+            <CardHeader className="pb-4">
+              <CardTitle className="font-display text-xl text-success flex items-center gap-2">
+                🎉 Token Deployed Successfully!
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium">Token Address:</Label>
-                <p className="font-mono text-sm bg-white p-2 rounded border mt-1">
-                  {deploymentResult.address}
-                </p>
+            <CardContent className="space-y-6">
+              <div className="bg-card/60 p-6 rounded-xl border border-border/50 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Token Address</Label>
+                  <div className="font-mono text-sm bg-muted/50 p-3 rounded-lg border border-border/30 break-all">
+                    {deploymentResult.address}
+                  </div>
+                </div>
+                
+                {deploymentResult.transactionHash && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Transaction Hash</Label>
+                    <div className="font-mono text-sm bg-muted/50 p-3 rounded-lg border border-border/30 break-all">
+                      {deploymentResult.transactionHash}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-4">
+              
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  className="flex-1 font-display h-12"
                   onClick={() => window.open(deploymentResult.explorerUrl, '_blank')}
                 >
-                  View on Explorer
+                  View on BaseScan
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  className="flex-1 font-display h-12"
                   onClick={() => window.open(deploymentResult.clankerUrl, '_blank')}
                 >
                   View on Clanker
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="flex-1 font-display h-12"
+                  onClick={() => {
+                    navigator.clipboard.writeText(deploymentResult.address)
+                    toast({
+                      title: "Copied!",
+                      description: "Token address copied to clipboard",
+                    })
+                  }}
+                >
+                  Copy Address
                 </Button>
               </div>
             </CardContent>
