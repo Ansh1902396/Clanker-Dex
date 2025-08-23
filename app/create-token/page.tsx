@@ -236,7 +236,7 @@ export default function CreateTokenPage() {
             <div className="bg-muted/50 p-6 rounded-xl space-y-4 border">
               <div className="flex justify-between items-center text-base">
                 <span className="font-medium">Network:</span>
-                <span className="font-mono">Base Sepolia Testnet</span>
+                <span className="font-mono">Base Mainnet</span>
               </div>
               <div className="flex justify-between items-center text-base">
                 <span className="font-medium">SDK:</span>
