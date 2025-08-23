@@ -19,9 +19,14 @@ export default function CreateTokenPage() {
     symbol: '',
     description: '',
     website: '',
+    image: '',
     totalSupply: '1000000',
     decimals: 18,
-    devBuyAmount: 0.01
+    devBuyAmount: 0.001, // Default to minimum recommended amount
+    vanity: false,
+    projectType: 'meme',
+    socialMediaUrls: [],
+    auditUrls: []
   })
   const [isDeploying, setIsDeploying] = useState(false)
   const [deploymentResult, setDeploymentResult] = useState<any>(null)
@@ -30,7 +35,7 @@ export default function CreateTokenPage() {
   const { data: walletClient } = useWalletClient()
   const { toast } = useToast()
 
-  const handleInputChange = (field: keyof TokenDeploymentParams, value: string | number) => {
+  const handleInputChange = (field: keyof TokenDeploymentParams, value: string | number | boolean | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -188,12 +193,16 @@ export default function CreateTokenPage() {
                   id="dev-buy" 
                   type="number" 
                   step="0.001"
-                  placeholder="0.01" 
+                  min="0.001"
+                  placeholder="0.001" 
                   className="font-mono h-12 px-4"
                   value={formData.devBuyAmount}
-                  onChange={(e) => handleInputChange('devBuyAmount', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleInputChange('devBuyAmount', parseFloat(e.target.value) || 0.001)}
                   disabled={isDeploying}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Minimum 0.001 ETH guaranteed. This ensures you receive tokens from your deployment.
+                </p>
               </div>
             </div>
 
@@ -225,6 +234,66 @@ export default function CreateTokenPage() {
                 disabled={isDeploying}
               />
             </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="image" className="text-sm font-medium">
+                Token Image URL (Optional)
+              </Label>
+              <Input 
+                id="image" 
+                type="url" 
+                placeholder="https://your-image-url.com/token.png or ipfs://..." 
+                className="font-mono h-12 px-4"
+                value={formData.image}
+                onChange={(e) => handleInputChange('image', e.target.value)}
+                disabled={isDeploying}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Token Type</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="projectType"
+                      value="meme"
+                      checked={formData.projectType === 'meme'}
+                      onChange={(e) => handleInputChange('projectType', e.target.value as 'meme' | 'project')}
+                      disabled={isDeploying}
+                      className="text-primary"
+                    />
+                    <span className="text-sm">Meme Token</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="projectType"
+                      value="project"
+                      checked={formData.projectType === 'project'}
+                      onChange={(e) => handleInputChange('projectType', e.target.value as 'meme' | 'project')}
+                      disabled={isDeploying}
+                      className="text-primary"
+                    />
+                    <span className="text-sm">Project Token</span>
+                  </label>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Vanity Address</Label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.vanity || false}
+                    onChange={(e) => handleInputChange('vanity', e.target.checked)}
+                    disabled={isDeploying}
+                    className="text-primary"
+                  />
+                  <span className="text-sm">Generate vanity address (ends with "b07")</span>
+                </label>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -240,14 +309,39 @@ export default function CreateTokenPage() {
               </div>
               <div className="flex justify-between items-center text-base">
                 <span className="font-medium">SDK:</span>
-                <span className="font-mono">Clanker SDK v4</span>
+                <span className="font-mono">Clanker SDK v4.0.0</span>
               </div>
-              {(formData.devBuyAmount || 0) > 0 && (
+              <div className="flex justify-between items-center text-base">
+                <span className="font-medium">Token Type:</span>
+                <span className="font-mono capitalize">{formData.projectType}</span>
+              </div>
+              <div className="flex justify-between items-center text-base">
+                <span className="font-medium">Dev Buy (Guaranteed):</span>
+                <span className="font-mono text-primary">
+                  {(formData.devBuyAmount && formData.devBuyAmount > 0) ? formData.devBuyAmount : 0.001} ETH
+                </span>
+              </div>
+              {formData.vanity && (
                 <div className="flex justify-between items-center text-base">
-                  <span className="font-medium">Dev Buy:</span>
-                  <span className="font-mono text-primary">{formData.devBuyAmount || 0} ETH</span>
+                  <span className="font-medium">Vanity Address:</span>
+                  <span className="font-mono text-green-600">Enabled (ends with "b07")</span>
                 </div>
               )}
+              <div className="flex justify-between items-center text-base">
+                <span className="font-medium">Fee Structure:</span>
+                <span className="font-mono">1% Static Fees</span>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+              <h4 className="font-medium text-blue-900 mb-2">✨ Clanker v4.0.0 Features</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Automatic dev buy ensures you receive tokens</li>
+                <li>• Enhanced metadata and social provenance</li>
+                <li>• Optimized pool configurations</li>
+                <li>• Professional fee structures</li>
+                {formData.vanity && <li>• Vanity address generation</li>}
+              </ul>
             </div>
 
             <Button 
