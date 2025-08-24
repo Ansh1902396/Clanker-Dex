@@ -44,12 +44,16 @@ export default function DashboardOverview({ selectedToken }: DashboardOverviewPr
     refreshBalances()
   }, [refreshBalances])
 
-  const tokenData = selectedToken || {
+  // Use SOULB token data
+  const soulbToken = {
     symbol: "STK",
-    price: "$1,234.56",
-    change: "+12.5%",
-    name: "STK Token",
+    price: "$0.0012",
+    change: "+15.2%",
+    name: "SOULB",
+    address: "0xa6106BB43A4679D3Ec2b275195F7FAf59e0Cef66"
   }
+
+  const tokenData = selectedToken || soulbToken
 
   return (
     <DashboardPageLayout
@@ -111,7 +115,7 @@ export default function DashboardOverview({ selectedToken }: DashboardOverviewPr
       </div>
 
       {/* Trade Button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-6">
         <Button
           onClick={() => setShowTradeModal(true)}
           className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-xl font-display"
@@ -126,7 +130,6 @@ export default function DashboardOverview({ selectedToken }: DashboardOverviewPr
         onClose={() => setShowTradeModal(false)}
         selectedToken={selectedToken}
         onTrade={executeTrade}
-        balances={balances}
         isLoading={isLoading}
       />
     </DashboardPageLayout>
