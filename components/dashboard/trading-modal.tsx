@@ -9,13 +9,14 @@ import { X, ArrowUpDown, RefreshCw } from "lucide-react"
 import { useClankerQuote } from "@/hooks/use-clanker-quote"
 import { useWallet } from "@/hooks/use-wallet"
 import { useTokenBalances } from "@/hooks/use-token-balances"
+import { useToken } from "@/contexts/token-context"
+import Image from "next/image"
 import type { Token } from "@/components/dashboard/token-list"
 import type { TradeParams, TokenBalance, TradeResult } from "@/types/trading"
 
 interface TradingModalProps {
   isOpen: boolean
   onClose: () => void
-  selectedToken?: Token | null
   onTrade?: (tradeParams: TradeParams) => Promise<TradeResult>
   isLoading?: boolean
 }
@@ -36,10 +37,12 @@ const TAKER_ADDRESS = "0xcFE743EA353d4d3D2c20C41C7d878B2cbA66DA0a" // Default ta
 export default function TradingModal({ 
   isOpen, 
   onClose, 
-  selectedToken, 
   onTrade,
   isLoading = false 
 }: TradingModalProps) {
+  // Get selected token from context
+  const { selectedToken } = useToken()
+  
   const [currentToken, setCurrentToken] = useState(selectedToken?.symbol || "STK")
   const [sellAmount, setSellAmount] = useState("")
   const [buyAmount, setBuyAmount] = useState("")
@@ -155,6 +158,17 @@ export default function TradingModal({
   // Get real-time quote from Clanker API
   const getQuoteFromClanker = useCallback(async (amount: string) => {
     if (!amount || isNaN(Number(amount))) return
+    if (!selectedToken) {
+      console.error("[Trading Modal] No selected token available for quote")
+      setBuyAmount("No token selected")
+      return
+    }
+    
+    console.log("[Trading Modal] Selected token for quote:", {
+      symbol: selectedToken.symbol,
+      contractAddress: selectedToken.contractAddress,
+      name: selectedToken.name
+    })
     
     const amountNum = Number(amount)
     if (amountNum <= 0) return
@@ -171,23 +185,26 @@ export default function TradingModal({
     setExchangeRate(null)
     
     try {
-      // Determine sell and buy tokens based on swap direction
-      const sellToken = isSwapped ? SOULB_TOKEN.address : ETH_ADDRESS
-      const buyToken = isSwapped ? ETH_ADDRESS : SOULB_TOKEN.address
+      // Determine sell and buy tokens based on swap direction - USE SELECTED TOKEN ADDRESS
+      const sellToken = isSwapped ? selectedToken.contractAddress : ETH_ADDRESS
+      const buyToken = isSwapped ? ETH_ADDRESS : selectedToken.contractAddress
       
       // Convert to wei with higher precision for small amounts
       const sellAmountWei = (amountNum * Math.pow(10, 18)).toString()
 
       console.log("[Trading Modal] Getting quote for:", {
-        sellToken: isSwapped ? "STK" : "ETH",
-        buyToken: isSwapped ? "ETH" : "STK", 
+        sellToken: isSwapped ? selectedToken.symbol : "ETH",
+        buyToken: isSwapped ? "ETH" : selectedToken.symbol, 
         sellAmount: amount,
         sellAmountWei,
-        isSwapped
+        isSwapped,
+        sellTokenAddress: sellToken,
+        buyTokenAddress: buyToken,
+        selectedTokenContract: selectedToken.contractAddress
       })
 
       await getQuote({
-        chainId: SOULB_TOKEN.chainId,
+        chainId: 8453, // Base chain - tokens should be on Base
         sellToken,
         buyToken,
         sellAmount: sellAmountWei,
@@ -203,7 +220,7 @@ export default function TradingModal({
     } finally {
       setQuoteLoading(false)
     }
-  }, [getQuote, address]) // Remove isSwapped from dependencies to prevent unnecessary recreations
+  }, [getQuote, address, selectedToken, isSwapped]) // Add selectedToken and isSwapped to dependencies
 
   const handleSwapDirection = () => {
     setIsSwapped(!isSwapped)
@@ -266,9 +283,14 @@ export default function TradingModal({
       return
     }
 
+    if (!selectedToken) {
+      console.error("[Trading Modal] No selected token available")
+      return
+    }
+
     const tradeParams: TradeParams = {
-      sellToken: isSwapped ? SOULB_TOKEN.address : ETH_ADDRESS,
-      buyToken: isSwapped ? ETH_ADDRESS : SOULB_TOKEN.address,
+      sellToken: isSwapped ? selectedToken.contractAddress : ETH_ADDRESS,
+      buyToken: isSwapped ? ETH_ADDRESS : selectedToken.contractAddress,
       sellAmount,
       buyAmount,
       isSwapped,
@@ -314,24 +336,34 @@ export default function TradingModal({
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <Card className="w-full max-w-md mx-4 bg-background border-accent/20">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="font-display text-xl">Trade ${currentToken}</CardTitle>
-          <div className="flex items-center space-x-2">
-            {isConnected && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={refreshBalances}
-                disabled={balancesLoading}
-                className="p-2"
+      <Card className="w-full max-w-lg mx-4 bg-gradient-to-br from-background/95 to-background/80 border-accent/20 shadow-2xl backdrop-blur-sm">
+        <CardHeader className="space-y-4 pb-6">
+          {/* Header with Close Button */}
+          <div className="flex items-center justify-between">
+            <CardTitle className="font-display text-xl text-foreground/90">
+              Trade {selectedToken ? selectedToken.symbol : currentToken}
+            </CardTitle>
+            <div className="flex items-center space-x-2">
+              {isConnected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refreshBalances}
+                  disabled={balancesLoading}
+                  className="p-2 hover:bg-accent/10"
+                >
+                  <RefreshCw className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose}
+                className="p-2 hover:bg-accent/10"
               >
-                <RefreshCw className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`} />
+                <X className="h-4 w-4" />
               </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import Image from "next/image"
 import { useTokens } from "@/hooks/use-tokens"
+import { useToken } from "@/contexts/token-context"
 import { type Token as ClankerToken } from "@/lib/schemas/clanker"
 
 // Interface for compatibility with existing components
@@ -87,6 +88,9 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [searchInput, setSearchInput] = useState("")
   
+  // Use token context
+  const { setSelectedToken: setGlobalSelectedToken } = useToken()
+  
   // Use the tokens hook with search functionality
   const { 
     tokens: clankerTokens, 
@@ -122,8 +126,14 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
 
   const handleTokenClick = (token: Token) => {
     console.log("[v0] Token clicked:", token.symbol)
+    console.log("[v0] Full token object:", token)
     console.log("[v0] onTokenSelect callback exists:", !!onTokenSelect)
 
+    // Always update the global context
+    console.log("[v0] Setting global selected token via context")
+    setGlobalSelectedToken(token)
+
+    // Also call the callback if provided (for backward compatibility)
     if (onTokenSelect) {
       console.log("[v0] Calling onTokenSelect with token:", token)
       onTokenSelect(token)
@@ -141,33 +151,33 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
 
   return (
     <Card className="w-full bg-background/40 border-accent/10 shadow-lg backdrop-blur-sm">
-      <CardHeader className="pb-4 px-6 pt-6">
-        <CardTitle className="font-display text-xl text-foreground/90 mb-4">Clanker Tokens</CardTitle>
+      <CardHeader className="pb-3 px-6 pt-5">
+        <CardTitle className="font-display text-xl text-foreground/90 mb-3">Clanker Tokens</CardTitle>
         {/* Search Input */}
         <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-accent/5 to-primary/5 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-accent/5 to-primary/5 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground/50 group-hover:text-accent/70 group-focus-within:text-accent h-4 w-4 transition-colors duration-200" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/50 group-hover:text-accent/70 group-focus-within:text-accent h-4 w-4 transition-colors duration-200" />
             <Input
-              placeholder="Search tokens by name or symbol..."
+              placeholder="Search tokens..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-12 pr-4 py-3.5 bg-gradient-to-r from-background/30 via-background/20 to-background/30 border border-accent/15 hover:border-accent/30 focus:border-accent/60 focus:bg-background/40 transition-all duration-300 rounded-xl text-foreground placeholder:text-muted-foreground/40 shadow-sm hover:shadow-md focus:shadow-lg focus:shadow-accent/10 backdrop-blur-sm"
+              className="pl-10 pr-4 py-2.5 h-10 bg-gradient-to-r from-background/30 via-background/20 to-background/30 border border-accent/15 hover:border-accent/30 focus:border-accent/60 focus:bg-background/40 transition-all duration-300 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/40 shadow-sm hover:shadow-md focus:shadow-lg focus:shadow-accent/10 backdrop-blur-sm"
             />
           </div>
           {searchInput && (
             <button
               onClick={() => setSearchInput("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/80 transition-colors duration-200 p-1 rounded-full hover:bg-background/50"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/80 transition-colors duration-200 p-1 rounded-full hover:bg-background/50"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 max-h-[500px] overflow-y-auto px-6 pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-accent/20">
+      <CardContent className="space-y-3 max-h-[600px] overflow-y-auto px-6 pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-accent/20">
         {/* Loading State */}
         {loading && tokens.length === 0 && (
           <div className="flex items-center justify-center py-12">
@@ -209,31 +219,31 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
         {tokens.map((token) => (
           <div
             key={token.id}
-            className="group p-5 rounded-xl bg-gradient-to-r from-background/40 to-background/20 border border-accent/10 hover:border-accent/30 hover:from-background/60 hover:to-background/40 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-accent/5"
+            className="group p-4 rounded-lg bg-gradient-to-r from-background/40 to-background/20 border border-accent/10 hover:border-accent/30 hover:from-background/60 hover:to-background/40 cursor-pointer transition-all duration-300 hover:shadow-md hover:shadow-accent/5"
             onClick={() => handleTokenClick(token)}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <Image
                   src={token.image || "/placeholder.svg"}
                   alt={token.name}
-                  width={48}
-                  height={48}
+                  width={40}
+                  height={40}
                   className="rounded-full ring-2 ring-accent/10 group-hover:ring-accent/25 transition-all duration-300"
                   onError={(e) => {
                     e.currentTarget.src = "/placeholder.svg"
                   }}
                 />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500/80 rounded-full border-2 border-background"></div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500/80 rounded-full border border-background"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-display text-base font-semibold text-foreground/90 group-hover:text-foreground transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-display text-sm font-semibold text-foreground/90 group-hover:text-foreground transition-colors">
                     {token.symbol}
                   </span>
                   <Badge
                     variant="secondary"
-                    className={`text-xs px-2 py-1 font-medium ${
+                    className={`text-xs px-1.5 py-0.5 font-medium ${
                       token.change.startsWith("+") 
                         ? "bg-green-500/15 text-green-400 border-green-500/20" 
                         : "bg-red-500/15 text-red-400 border-red-500/20"
@@ -242,14 +252,14 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
                     {token.change}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground/80 truncate mb-1 group-hover:text-muted-foreground transition-colors">
+                <p className="text-xs text-muted-foreground/80 truncate mb-1 group-hover:text-muted-foreground transition-colors">
                   {token.name}
                 </p>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-mono font-medium text-foreground/80">
+                  <p className="text-xs font-mono font-medium text-foreground/80">
                     {token.price}
                   </p>
-                  <p className="text-xs text-muted-foreground/60 font-medium">
+                  <p className="text-xs text-muted-foreground/60 font-medium truncate ml-2">
                     by {token.creator}
                   </p>
                 </div>
@@ -260,105 +270,23 @@ export default function TokenList({ onTokenSelect }: TokenListProps) {
 
         {/* Load More Button */}
         {hasMore && (
-          <div className="text-center pt-4 border-t border-accent/10">
+          <div className="text-center pt-3 border-t border-accent/10">
             <Button
               variant="outline"
-              size="default"
+              size="sm"
               onClick={handleLoadMore}
               disabled={loading}
-              className="bg-gradient-to-r from-background/60 to-background/40 border-accent/20 hover:border-accent/40 text-foreground/80 hover:text-foreground px-6 py-3 font-medium transition-all duration-300 hover:shadow-md hover:shadow-accent/10"
+              className="bg-gradient-to-r from-background/60 to-background/40 border-accent/20 hover:border-accent/40 text-foreground/80 hover:text-foreground px-4 py-2 text-sm font-medium transition-all duration-300 hover:shadow-md hover:shadow-accent/10"
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-accent/30 border-t-accent mr-2"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-accent/30 border-t-accent mr-2"></div>
                   Loading...
                 </>
               ) : (
-                "Load More Tokens"
+                "Load More"
               )}
             </Button>
-          </div>
-        )}
-
-        {/* Token Info Modal - only show if no onTokenSelect callback */}
-        {selectedToken && !onTokenSelect && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-lg z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-lg mx-4 bg-gradient-to-br from-background/95 to-background/80 border-accent/20 shadow-2xl backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 px-6 pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Image
-                      src={selectedToken.image || "/placeholder.svg"}
-                      alt={selectedToken.name}
-                      width={40}
-                      height={40}
-                      className="rounded-full ring-2 ring-accent/20"
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.svg"
-                      }}
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500/80 rounded-full border-2 border-background"></div>
-                  </div>
-                  <div>
-                    <CardTitle className="font-display text-xl text-foreground/90">{selectedToken.symbol}</CardTitle>
-                    <p className="text-sm text-muted-foreground/80">{selectedToken.name}</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setSelectedToken(null)}
-                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
-                >
-                  ✕
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-6 px-6 pb-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                    <p className="text-xs text-muted-foreground/70 mb-1 uppercase tracking-wide">Price</p>
-                    <p className="font-mono text-base font-semibold text-foreground/90">{selectedToken.price}</p>
-                  </div>
-                  <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                    <p className="text-xs text-muted-foreground/70 mb-1 uppercase tracking-wide">24h Change</p>
-                    <p
-                      className={`font-mono text-base font-semibold ${
-                        selectedToken.change.startsWith("+") ? "text-green-400" : "text-red-400"
-                      }`}
-                    >
-                      {selectedToken.change}
-                    </p>
-                  </div>
-                  <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                    <p className="text-xs text-muted-foreground/70 mb-1 uppercase tracking-wide">Market Cap</p>
-                    <p className="font-mono text-base font-semibold text-foreground/90">{selectedToken.marketCap}</p>
-                  </div>
-                  <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                    <p className="text-xs text-muted-foreground/70 mb-1 uppercase tracking-wide">24h Volume</p>
-                    <p className="font-mono text-base font-semibold text-foreground/90">{selectedToken.volume}</p>
-                  </div>
-                </div>
-
-                <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                  <p className="text-xs text-muted-foreground/70 mb-2 uppercase tracking-wide">Creator</p>
-                  <p className="font-mono text-sm text-foreground/80">{selectedToken.creator}</p>
-                </div>
-
-                <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                  <p className="text-xs text-muted-foreground/70 mb-2 uppercase tracking-wide">Contract Address</p>
-                  <p className="font-mono text-sm break-all text-foreground/80">{selectedToken.contractAddress}</p>
-                </div>
-
-                <div className="bg-background/40 rounded-lg p-4 border border-accent/10">
-                  <p className="text-xs text-muted-foreground/70 mb-2 uppercase tracking-wide">Description</p>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{selectedToken.description}</p>
-                </div>
-
-                <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-display text-lg py-3 shadow-lg transition-all duration-300">
-                  Trade {selectedToken.symbol}
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         )}
       </CardContent>
