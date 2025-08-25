@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { X, ArrowUpDown, RefreshCw } from "lucide-react"
+import { X, ArrowUpDown, RefreshCw, TrendingUp } from "lucide-react"
 import { useClankerQuote } from "@/hooks/use-clanker-quote"
 import { useWallet } from "@/hooks/use-wallet"
 import { useTokenBalances } from "@/hooks/use-token-balances"
 import { useToken } from "@/contexts/token-context"
+import GeckoTerminalChart from "@/components/dashboard/chart/gecko-terminal-chart"
 import Image from "next/image"
 import type { Token } from "@/components/dashboard/token-list"
 import type { TradeParams, TokenBalance, TradeResult } from "@/types/trading"
@@ -51,6 +52,7 @@ export default function TradingModal({
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteTimeout, setQuoteTimeout] = useState<NodeJS.Timeout | null>(null)
   const [lastQuoteTime, setLastQuoteTime] = useState<number>(0)
+  const [showChart, setShowChart] = useState(false)
 
   // Get wallet connection status
   const { isConnected, address } = useWallet()
@@ -336,36 +338,47 @@ export default function TradingModal({
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <Card className="w-full max-w-lg mx-4 bg-gradient-to-br from-background/95 to-background/80 border-accent/20 shadow-2xl backdrop-blur-sm">
-        <CardHeader className="space-y-4 pb-6">
-          {/* Header with Close Button */}
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-display text-xl text-foreground/90">
-              Trade {selectedToken ? selectedToken.symbol : currentToken}
-            </CardTitle>
-            <div className="flex items-center space-x-2">
-              {isConnected && (
+      <div className="w-full max-w-6xl mx-4 flex gap-6">
+        {/* Main Trading Panel */}
+        <Card className="w-full max-w-lg bg-gradient-to-br from-background/95 to-background/80 border-accent/20 shadow-2xl backdrop-blur-sm">
+          <CardHeader className="space-y-4 pb-6">
+            {/* Header with Close Button */}
+            <div className="flex items-center justify-between">
+              <CardTitle className="font-display text-xl text-foreground/90">
+                Trade {selectedToken ? selectedToken.symbol : currentToken}
+              </CardTitle>
+              <div className="flex items-center space-x-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={refreshBalances}
-                  disabled={balancesLoading}
+                  onClick={() => setShowChart(!showChart)}
+                  className="p-2 hover:bg-accent/10"
+                  title="Toggle Chart"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                </Button>
+                {isConnected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshBalances}
+                    disabled={balancesLoading}
+                    className="p-2 hover:bg-accent/10"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onClose}
                   className="p-2 hover:bg-accent/10"
                 >
-                  <RefreshCw className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`} />
+                  <X className="h-4 w-4" />
                 </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onClose}
-                className="p-2 hover:bg-accent/10"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
         <CardContent className="space-y-6">
           {/* Error Display */}
           {(balancesError || quoteError) && (
@@ -617,6 +630,37 @@ export default function TradingModal({
           </Button>
         </CardContent>
       </Card>
+
+        {/* Chart Panel - Show when toggled */}
+        {showChart && selectedToken && (
+          <Card className="w-full max-w-2xl bg-gradient-to-br from-background/95 to-background/80 border-accent/20 shadow-2xl backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="font-display text-lg text-foreground/90">
+                  {selectedToken.name} Chart
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowChart(false)}
+                  className="p-2 hover:bg-accent/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <GeckoTerminalChart
+                tokenAddress={selectedToken.contractAddress}
+                tokenSymbol={selectedToken.symbol}
+                tokenName={selectedToken.name}
+                height="400px"
+                className="border-0"
+              />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

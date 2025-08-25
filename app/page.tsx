@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import BracketsIcon from "@/components/icons/brackets"
 import TradingModal from "@/components/dashboard/trading-modal"
+import GeckoTerminalChart from "@/components/dashboard/chart/gecko-terminal-chart"
 import { useTrading } from "@/hooks/use-trading"
 import { useClankerQuote } from "@/hooks/use-clanker-quote"
 import { useToken } from "@/contexts/token-context"
@@ -140,100 +141,120 @@ export default function DashboardOverview({ selectedToken: propSelectedToken }: 
     >
       {/* Main Trading Chart Area */}
       <div className="mb-6">
-        <Card className="h-[600px] bg-background/50 border-accent/20">
-          <CardContent className="p-6 h-full">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                {/* Token Image and Info */}
-                {displayedToken && (
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Image
-                        src={tokenData.image || "/placeholder.svg"}
-                        alt={tokenData.name}
-                        width={40}
-                        height={40}
-                        className="rounded-full ring-2 ring-accent/20"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.svg"
-                        }}
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500/80 rounded-full border border-background"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground/80">{tokenData.name}</p>
-                      <p className="text-xs text-muted-foreground/60">by {tokenData.creator || "Unknown"}</p>
-                    </div>
+        <GeckoTerminalChart
+          tokenAddress={tokenData.contractAddress}
+          tokenSymbol={tokenData.symbol}
+          tokenName={tokenData.name}
+          height="600px"
+        />
+      </div>
+
+      {/* Token Information Panel */}
+      <div className="mb-6">
+        <Card className="bg-background/50 border-accent/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-6 mb-4">
+              {/* Token Image and Info */}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Image
+                    src={tokenData.image || "/placeholder.svg"}
+                    alt={tokenData.name}
+                    width={50}
+                    height={50}
+                    className="rounded-full ring-2 ring-accent/20"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.svg"
+                    }}
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500/80 rounded-full border border-background"></div>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-display text-primary">{tokenData.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-sm">
+                      {tokenData.symbol}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground font-mono">
+                      {tokenData.contractAddress.slice(0, 6)}...{tokenData.contractAddress.slice(-4)}
+                    </span>
                   </div>
-                )}
-                
-                <h2 className="text-3xl font-display text-primary">{currentToken}/USD</h2>
-                <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-lg px-3 py-1">
-                  {tokenData.price}
-                </Badge>
-                <span className={`text-lg ${tokenData.change?.startsWith("+") ? "text-green-400" : "text-red-400"}`}>
-                  {tokenData.change || "0.00%"}
-                </span>
-                
-                {/* Live Quote Display */}
-                <div className="text-right">
-                  <div className="text-sm text-muted-foreground/60">
-                    Live Quote: {formatQuotePrice()}
-                  </div>
+                  <p className="text-xs text-muted-foreground/60 mt-1">by {tokenData.creator || "Unknown"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  1s
-                </Button>
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  1m
-                </Button>
-                <Button variant="outline" size="sm" className="bg-accent text-sm">
-                  5m
-                </Button>
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  15m
-                </Button>
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  1h
-                </Button>
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  4h
-                </Button>
-                <Button variant="outline" size="sm" className="text-sm bg-transparent">
-                  1D
-                </Button>
+
+              {/* Price Information */}
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground/70">Market Price</p>
+                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-lg px-3 py-1">
+                    {tokenData.price}
+                  </Badge>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground/70">24h Change</p>
+                  <span className={`text-lg font-semibold ${tokenData.change?.startsWith("+") ? "text-green-400" : "text-red-400"}`}>
+                    {tokenData.change || "0.00%"}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground/70">Live Quote</p>
+                  <span className="text-lg font-mono text-foreground">
+                    {formatQuotePrice()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Market Stats */}
+              <div className="flex items-center gap-6 ml-auto">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground/70">Market Cap</p>
+                  <p className="text-lg font-semibold">{tokenData.marketCap}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground/70">24h Volume</p>
+                  <p className="text-lg font-semibold">{tokenData.volume}</p>
+                </div>
               </div>
             </div>
 
-            {/* Chart Placeholder */}
-            <div className="h-full bg-background/30 rounded-lg border border-accent/20 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl font-display mb-4 text-accent">📈</div>
-                <p className="text-muted-foreground text-xl">Trading Chart</p>
-                <p className="text-lg text-muted-foreground/60">Real-time price data for {currentToken}</p>
-                {quoteData && (
-                  <div className="mt-4 p-4 bg-background/40 rounded-lg border border-accent/15 max-w-md mx-auto">
-                    <p className="text-sm text-muted-foreground mb-2">Live Quote (1 ETH → {currentToken})</p>
+            {/* Live Quote Details */}
+            {quoteData && (
+              <div className="p-4 bg-background/40 rounded-lg border border-accent/15">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Live Trading Quote (1 ETH → {currentToken})</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-wide">You Get</p>
                     <p className="text-lg font-mono text-foreground">
                       {quoteData.buyAmount ? 
                         `${(parseFloat(quoteData.buyAmount) / Math.pow(10, 18)).toLocaleString(undefined, {maximumFractionDigits: 2})} ${currentToken}` : 
                         "No quote available"
                       }
                     </p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">
-                      Price per token: {formatQuotePrice()}
-                    </p>
-                    {quoteData.gas && (
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        Est. Gas: {parseInt(quoteData.gas).toLocaleString()}
-                      </p>
-                    )}
                   </div>
-                )}
+                  <div>
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-wide">Price per Token</p>
+                    <p className="text-lg font-mono text-foreground">
+                      {formatQuotePrice()}
+                    </p>
+                  </div>
+                  {quoteData.gas && (
+                    <div>
+                      <p className="text-xs text-muted-foreground/60 uppercase tracking-wide">Est. Gas</p>
+                      <p className="text-lg font-mono text-foreground">
+                        {parseInt(quoteData.gas).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-wide">Last Updated</p>
+                    <p className="text-sm text-muted-foreground">
+                      Just now
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
